@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import yaml
+from src.spatial_profiles import distribution, comparison, history_comparison, METRICS
 from src.errors import AnalysisError
 from src.thermal_reader import load_thermal, read_rgb
 from src.analyzer import analyze
@@ -118,6 +119,7 @@ def history_view():
     st.download_button("Завантажити таблицю CSV", comparison_csv(frame.to_dict("records")),
         "comparison_table.csv", "text/csv", key="history_csv")
     st.caption(f"Рядків: {len(frame)}. CSV містить усі стовпці та лише відібрані записи; його можна відкрити в Excel.")
+    history_comparison(frame)
     from src import history_editor as history_editor_module
     if getattr(history_editor_module, "HISTORY_EDITOR_VERSION", 0) < 2:
         import importlib
@@ -401,16 +403,15 @@ with analysis_tab:
                                 st.markdown(f"Температурний діапазон (Tmax − Tmin): **{temperature_range:.2f} °C**")
                                 variance = row.get("variance_c2", row["std"] ** 2)
                                 st.markdown(f"Дисперсія температур: **{variance:.3f} °C²**")
+                                st.caption(f"Неоднорідність (SD): {row['std']:.2f} °C. Більше SD означає більший розкид температур.")
                                 show_distribution(result.thermal.temperatures, result.regions[row["region_id"]])
                                 st.caption(f"Площа: {row['pixel_count']:,} пікселів")
                 if report["comparison"]:
                     with comparison_area:
-                        comp = report["comparison"]
-                        c1, c2, c3 = st.columns(3)
-                        c1.metric("Різниця A − B", f"{comp['difference_c']:+.2f} °C")
-                        c2.metric("Абсолютна асиметрія", f"{comp['absolute_asymmetry_c']:.2f} °C")
-                        c3.metric("Відносна різниця", f"{comp['percentage_difference_kelvin']:.3f}%")
-                        st.caption("Відносна різниця — від середньої абсолютної температури у Кельвінах.")
+                        by_region = {r["region_id"]: r for r in report["regions"]}
+                        st.caption(f"A: {names[pair[0]]} · B: {names[pair[1]]}")
+                        comparison(by_region[pair[0]], by_region[pair[1]], METRICS, "pair_metrics"+result.analysis_id)
+                distribution(result, selected, names)
                 with st.expander("Докладні показники"):
                     for row in report["regions"]:
                         st.markdown(f"**{row['region_name']}**")
