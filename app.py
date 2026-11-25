@@ -60,6 +60,8 @@ def edit_public_record(root, record, region_id, changes=None, delete=False):
         reports[key] = updated
 
 st.set_page_config(page_title="Термограма", page_icon=":material/thermostat:", layout="wide")
+from src.tab_history import sync_tab_history
+sync_tab_history()
 st.markdown("<style>"+zipfile.ZipFile(ROOT/"source.zip").read("assets/interface.css").decode("utf-8")+"</style>", unsafe_allow_html=True)
 
 
@@ -235,7 +237,7 @@ with st.container(key="app_header"):
         with st.popover("Налаштування", width="stretch"):
             mode, threshold, annotation_style, color, gap, min_area, byte_order, overrides = settings()
 
-st.info("Веб-версія: знімки обробляються на сервері. Таблиця доступна лише у вашому поточному підключенні. Перед закриттям чи оновленням сторінки завантажте CSV; постійного архіву немає.")
+st.info("Веб-версія: знімки обробляються на сервері. Збережені записи історії відновлюються після оновлення сторінки та зберігаються до закриття вкладки. Перед закриттям завантажте CSV.")
 analysis_tab, history_tab = st.tabs(["Аналіз", "Історія"])
 with history_tab:
     history_view()
